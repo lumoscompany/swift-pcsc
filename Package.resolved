@@ -1,0 +1,33 @@
+{
+  "originHash" : "155032d2cab9cb68cf68cd3a6027f9b998b4b1dc4ac17289002652a964af5eca",
+  "pins" : [
+    {
+      "identity" : "swift-essentials",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lumoscompany/swift-essentials.git",
+      "state" : {
+        "revision" : "8cc0ab352619a0be8ff12c1dd35bf9ed3c916f56",
+        "version" : "0.0.17"
+      }
+    },
+    {
+      "identity" : "swift-essentials-nfc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lumoscompany/swift-essentials-nfc.git",
+      "state" : {
+        "revision" : "ca3ec5e51c5a416d59e620aa6c7d39e2ab18f7e8",
+        "version" : "0.0.2"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log",
+      "state" : {
+        "revision" : "9cb486020ebf03bfa5b5df985387a14a98744537",
+        "version" : "1.6.1"
+      }
+    }
+  ],
+  "version" : 3
+}
