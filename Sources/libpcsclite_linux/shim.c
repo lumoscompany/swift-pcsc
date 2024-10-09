@@ -2,5 +2,5 @@
 //  Created by Adam Stragner
 //
 
-#include <Clibpcsclite_linux.h>
+#include <libpcsclite_linux.h>
 extern unsigned _;
