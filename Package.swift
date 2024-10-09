@@ -23,7 +23,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/lumoscompany/swift-essentials-nfc.git",
-            .upToNextMajor(from: "0.0.2")
+            .upToNextMajor(from: "0.0.3")
         ),
     ],
     targets: [

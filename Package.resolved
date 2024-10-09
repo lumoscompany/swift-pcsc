@@ -1,5 +1,5 @@
 {
-  "originHash" : "e798dad831f00bf64246f267ecfccbf221e5064fb9b8cea70e33e8ba83ddf594",
+  "originHash" : "d0837b5fa720b93cc1650a0f7588ae9c4e9ea66a4ba2171c9caaa5e9c01a09aa",
   "pins" : [
     {
       "identity" : "swift-essentials",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lumoscompany/swift-essentials-nfc.git",
       "state" : {
-        "revision" : "ca3ec5e51c5a416d59e620aa6c7d39e2ab18f7e8",
-        "version" : "0.0.2"
+        "revision" : "a2ff23019ffaa305ea84bf21406d196e1a72b50a",
+        "version" : "0.0.3"
       }
     },
     {
