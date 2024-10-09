@@ -3,6 +3,7 @@
 //
 
 import Essentials
+@_implementationOnly import Clibpcsclite
 
 // MARK: - SCardError
 
@@ -13,7 +14,7 @@ public struct SCardError: Error {
         self.code = code
     }
 
-    init?(_ result: Int32) {
+    init?(_ result: LONG) {
         guard result != 0
         else {
             return nil
@@ -29,7 +30,7 @@ public struct SCardError: Error {
 
     // MARK: Internal
 
-    static func checkResult(_ result: Int32) throws (SCardError) {
+    static func checkResult(_ result: LONG) throws (SCardError) {
         guard let error = SCardError(result)
         else {
             return

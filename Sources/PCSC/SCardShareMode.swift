@@ -24,7 +24,7 @@ extension SCardShareMode: Hashable {}
 extension SCardShareMode: Sendable {}
 
 extension SCardShareMode {
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
         case .exclusive: 0x0001
         case .shared: 0x0002

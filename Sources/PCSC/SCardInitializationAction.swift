@@ -2,6 +2,8 @@
 //  Created by Adam Stragner
 //
 
+@_implementationOnly import Clibpcsclite
+
 // MARK: - SCardInitializationAction
 
 public enum SCardInitializationAction {
@@ -24,7 +26,7 @@ extension SCardInitializationAction: Hashable {}
 extension SCardInitializationAction: Sendable {}
 
 extension SCardInitializationAction {
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
         case .leave: 0x0000
         case .reset: 0x0001

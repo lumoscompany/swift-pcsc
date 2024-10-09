@@ -2,6 +2,8 @@
 //  Created by Adam Stragner
 //
 
+@_implementationOnly import Clibpcsclite
+
 // MARK: - SCardDispositionAction
 
 public enum SCardDispositionAction {
@@ -27,7 +29,7 @@ extension SCardDispositionAction: Hashable {}
 extension SCardDispositionAction: Sendable {}
 
 extension SCardDispositionAction {
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
         case .leave: 0x0000
         case .reset: 0x0001

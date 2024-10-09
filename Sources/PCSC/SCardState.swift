@@ -37,19 +37,19 @@ extension SCardState: Sendable {}
 // MARK: - SCardReader.DeviceStatus.CardState + RawRepresentable
 
 public extension SCardState {
-    init?(uInt32: UInt32) {
-        switch uInt32 {
-        case Self.absent.uInt32: self = .absent
-        case Self.present.uInt32: self = .present
-        case Self.swallowed.uInt32: self = .swallowed
-        case Self.powered.uInt32: self = .powered
-        case Self.negotiable.uInt32: self = .negotiable
-        case Self.specific.uInt32: self = .specific
+    init?(value: DWORD) {
+        switch value {
+        case Self.absent.dword: self = .absent
+        case Self.present.dword: self = .present
+        case Self.swallowed.dword: self = .swallowed
+        case Self.powered.dword: self = .powered
+        case Self.negotiable.dword: self = .negotiable
+        case Self.specific.dword: self = .specific
         default: return nil
         }
     }
 
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
         case .unknown: 0x0001
         case .absent: 0x0002

@@ -35,39 +35,39 @@ extension SCardProtocol: Hashable {}
 extension SCardProtocol: Sendable {}
 
 extension SCardProtocol {
-    init?(uInt32: UInt32) {
-        switch uInt32 {
-        case Self.undefined.uInt32: self = .undefined
-        case Self.t0.uInt32: self = .t0
-        case Self.t1.uInt32: self = .t1
-        case Self.raw.uInt32: self = .raw
-        // case Self.t15.uInt32: self = .t15
+    init?(value: DWORD) {
+        switch value {
+        case Self.undefined.dword: self = .undefined
+        case Self.t0.dword: self = .t0
+        case Self.t1.dword: self = .t1
+        case Self.raw.dword: self = .raw
+        // case Self.t15._LONG: self = .t15
         default: return nil
         }
     }
 
-    static func required(with uInt32: UInt32) throws (SCardError) -> Self {
-        switch uInt32 {
-        case undefined.uInt32, unset.uInt32: .undefined
-        case t0.uInt32: .t0
-        case t1.uInt32: .t1
-        case raw.uInt32: .raw
+    static func required(with DWORD: DWORD) throws (SCardError) -> Self {
+        switch DWORD {
+        case undefined.dword, unset.dword: .undefined
+        case t0.dword: .t0
+        case t1.dword: .t1
+        case raw.dword: .raw
         default: throw .init(.protoMismatch)
         }
     }
 
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
-        case .undefined, .unset: UInt32(CSCARD_PROTOCOL_UNDEFINED)
-        case .t0: UInt32(CSCARD_PROTOCOL_T0)
-        case .t1: UInt32(CSCARD_PROTOCOL_T1)
-        case .raw: UInt32(CSCARD_PROTOCOL_RAW)
+        case .undefined, .unset: DWORD(CSCARD_PROTOCOL_UNDEFINED)
+        case .t0: DWORD(CSCARD_PROTOCOL_T0)
+        case .t1: DWORD(CSCARD_PROTOCOL_T1)
+        case .raw: DWORD(CSCARD_PROTOCOL_RAW)
         }
     }
 }
 
 extension Sequence where Element == SCardProtocol {
-    var uInt32: UInt32 {
-        reduce(into: UInt32(0), { $0 |= $1.uInt32 })
+    var dword: DWORD {
+        reduce(into: DWORD(0), { $0 |= $1.dword })
     }
 }

@@ -19,7 +19,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/lumoscompany/swift-essentials.git",
-            .upToNextMajor(from: "0.0.17")
+            .upToNextMajor(from: "0.0.18")
         ),
         .package(
             url: "https://github.com/lumoscompany/swift-essentials-nfc.git",

@@ -19,7 +19,7 @@ extension SCardScope: Hashable {}
 extension SCardScope: Sendable {}
 
 extension SCardScope {
-    var uInt32: UInt32 {
+    var dword: DWORD {
         switch self {
         case .user: 0x0000
         case .terminal: 0x0001

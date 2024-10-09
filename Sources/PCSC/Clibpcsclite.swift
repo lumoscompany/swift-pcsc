@@ -5,6 +5,14 @@
 import Essentials
 @_implementationOnly import Clibpcsclite
 
+#if canImport(Darwin)
+public typealias LONG = Int32
+public typealias DWORD = UInt32
+#else
+public typealias LONG = Int
+public typealias DWORD = UInt
+#endif
+
 /// Maximum amount of bytes in an ATR
 private let MAX_ATR_SIZE = UInt32(33)
 
@@ -14,8 +22,8 @@ private let MAX_BUFFER_SIZE = UInt32(264)
 /// Maximum amount of bytes in an extended APDU command or response.
 private let MAX_BUFFER_SIZE_EXTENDED = UInt32(65548)
 
-public typealias SCardContext = Int32
-public typealias SCardHandle = Int32
+public typealias SCardContext = LONG
+public typealias SCardHandle = LONG
 
 /// Instantiates a context for the application within the PC/SC Resource Manager. This must be the first function called in a PC/SC application
 ///
@@ -32,7 +40,7 @@ public func SCardEstablishContext(
 ) throws (SCardError) -> SCardContext {
     var phContext: SCardContext = 0
     try SCardError.checkResult(CSCardEstablishContext(
-        dwScope.uInt32,
+        dwScope.dword,
         pvReserved1,
         pvReserved2,
         &phContext
@@ -66,7 +74,7 @@ public func SCardIsValidContext(_ hContext: SCardContext) -> Bool {
 public func CSCardListReaderGroups(
     _ hContext: SCardContext
 ) throws (SCardError) -> [SCardReaderGroup] {
-    var pcchGroups: UInt32 = 0
+    var pcchGroups: DWORD = 0
     try SCardError.checkResult(CSCardListReaderGroups(hContext, nil, &pcchGroups))
 
     let mszGroups: UnsafeMutablePointer<CChar> = .allocate(capacity: Int(pcchGroups))
@@ -87,7 +95,7 @@ public func SCardListReaders(
     _ hContext: SCardContext,
     _ mszGroups: [SCardReaderGroup] = []
 ) throws (SCardError) -> [SCardReaderName] {
-    var pcchReaders: UInt32 = 0
+    var pcchReaders: DWORD = 0
 
     var cGroups = [CChar](Array(mszGroups))
     let mszGroups: UnsafePointer<CChar>? = mszGroups.isEmpty ? nil : .init(&cGroups)
@@ -127,7 +135,7 @@ public func SCardGetStatusChange(
         var rgReaderState = CSCARD_READERSTATE()
         rgReaderState.dwCurrentState = $0.dwCurrentState.rawValue
         rgReaderState.dwEventState = $0.dwEventState.rawValue
-        rgReaderState.cbAtr = UInt32(MAX_ATR_SIZE)
+        rgReaderState.cbAtr = DWORD(MAX_ATR_SIZE)
 
         let szReader = $0.szReader.rawValue.cString(using: .utf8)
         szReaderNames.append(szReader)
@@ -139,14 +147,14 @@ public func SCardGetStatusChange(
             rgbAtrs.append(_rgbAtr)
 
             rgReaderState.rgbAtr = _rgbAtr
-            rgReaderState.cbAtr = MAX_ATR_SIZE
+            rgReaderState.cbAtr = DWORD(MAX_ATR_SIZE)
         }
 
         return rgReaderState
     })
 
-    let dwTimeout = UInt32(dwTimeout * 1000)
-    let cReaders = UInt32(_rgReaderStates.count)
+    let dwTimeout = DWORD(dwTimeout * 1000)
+    let cReaders = DWORD(_rgReaderStates.count)
 
     try SCardError.checkResult(CSCardGetStatusChange(
         hContext,
@@ -203,19 +211,19 @@ public func SCardConnect(
 ) throws (SCardError) -> (phCard: SCardHandle, pdwActiveProtocol: SCardProtocol) {
     let szReader = szReader.rawValue.cString(using: .utf8)
 
-    var phCard: Int32 = 0
-    var pdwActiveProtocol: UInt32 = 0
+    var phCard: LONG = 0
+    var pdwActiveProtocol: DWORD = 0
 
     try SCardError.checkResult(CSCardConnect(
         hContext,
         szReader?.withUnsafeBufferPointer({ $0.baseAddress }),
-        dwShareMode.uInt32,
-        dwPreferredProtocols.uInt32,
+        dwShareMode.dword,
+        dwPreferredProtocols.dword,
         &phCard,
         &pdwActiveProtocol
     ))
 
-    guard let pdwActiveProtocol = SCardProtocol(uInt32: pdwActiveProtocol)
+    guard let pdwActiveProtocol = SCardProtocol(value: pdwActiveProtocol)
     else {
         throw .init(.internalError)
     }
@@ -239,16 +247,16 @@ public func SCardReconnect(
     _ dwPreferredProtocols: Set<SCardProtocol> = [.t0, .t1],
     _ dwInitialization: SCardInitializationAction = .leave
 ) throws (SCardError) -> SCardProtocol {
-    var pdwActiveProtocol: UInt32 = 0
+    var pdwActiveProtocol: DWORD = 0
     try SCardError.checkResult(CSCardReconnect(
         hCard,
-        dwShareMode.uInt32,
-        dwPreferredProtocols.uInt32,
-        dwInitialization.uInt32,
+        dwShareMode.dword,
+        dwPreferredProtocols.dword,
+        dwInitialization.dword,
         &pdwActiveProtocol
     ))
 
-    guard let pdwActiveProtocol = SCardProtocol(uInt32: pdwActiveProtocol)
+    guard let pdwActiveProtocol = SCardProtocol(value: pdwActiveProtocol)
     else {
         throw .init(.internalError)
     }
@@ -265,7 +273,7 @@ public func SCardDisconnect(
     _ hCard: SCardHandle,
     _ dwDisposition: SCardDispositionAction
 ) throws (SCardError) {
-    try SCardError.checkResult(CSCardDisconnect(hCard, dwDisposition.uInt32))
+    try SCardError.checkResult(CSCardDisconnect(hCard, dwDisposition.dword))
 }
 
 /// Returns the current status of a smartcard previously connected with `SCardConnect`
@@ -286,14 +294,14 @@ public func SCardStatus(
 ) {
     let szReaderName: UnsafeMutablePointer<CChar> = .allocate(capacity: 200)
     defer { szReaderName.deallocate() }
-    var pcchReaderLen = UInt32(200)
+    var pcchReaderLen = DWORD(200)
 
     let pbAtr: UnsafeMutablePointer<UInt8> = .allocate(capacity: 32)
     defer { pbAtr.deallocate() }
-    var pcbAtrLen = UInt32(32)
+    var pcbAtrLen = DWORD(32)
 
-    var pdwState = UInt32(0)
-    var pdwProtocol = UInt32(0)
+    var pdwState = DWORD(0)
+    var pdwProtocol = DWORD(0)
 
     try SCardError.checkResult(CSCardStatus(
         hCard,
@@ -306,8 +314,8 @@ public func SCardStatus(
     ))
 
     let _szReaderName = [String](szReaderName, capacity: Int(pcchReaderLen)).first
-    let _pdwState = SCardState(uInt32: pdwState)
-    let _pdwProtocol = SCardProtocol(uInt32: pdwProtocol)
+    let _pdwState = SCardState(value: pdwState)
+    let _pdwProtocol = SCardProtocol(value: pdwProtocol)
     let _pbAtr = ByteCollection(Data(bytes: pbAtr, count: Int(pcbAtrLen)))
 
     guard let _szReaderName, let _pdwState, let _pdwProtocol
@@ -350,11 +358,11 @@ public func SCardTransmit(
     let pbSendBuffer = pbSendBuffer
 
     var pbRecvBuffer = ByteCollection(repeating: 0, count: Int(MAX_BUFFER_SIZE_EXTENDED))
-    var pcbRecvLength = UInt32(MAX_BUFFER_SIZE_EXTENDED)
+    var pcbRecvLength = DWORD(MAX_BUFFER_SIZE_EXTENDED)
 
     try SCardError.checkResult(CSCardTransmit(
         hCard,
-        _pioSendPci, pbSendBuffer, UInt32(pbSendBuffer.count),
+        _pioSendPci, pbSendBuffer, DWORD(pbSendBuffer.count),
         _pioRecvPci, &pbRecvBuffer, &pcbRecvLength
     ))
 
@@ -381,17 +389,17 @@ public func SCardTransmit(
 ///  value for `SCardConnect` or `SCardReconnect` `dwShareMode` parameter
 public func SCardControl(
     _ hCard: SCardHandle,
-    _ dwControlCode: UInt32,
+    _ dwControlCode: DWORD,
     _ pbSendBuffer: ByteCollection?
 ) throws (SCardError) -> ByteCollection? {
     var pbRecvBuffer = [UInt8](repeating: 0, count: Int(MAX_BUFFER_SIZE_EXTENDED))
-    let pcbRecvLength = UInt32(MAX_BUFFER_SIZE_EXTENDED)
+    let pcbRecvLength = DWORD(MAX_BUFFER_SIZE_EXTENDED)
 
-    var lpBytesReturned = UInt32(0)
+    var lpBytesReturned = DWORD(0)
 
     try SCardError.checkResult(CSCardControl(
         hCard, dwControlCode,
-        pbSendBuffer, UInt32(pbSendBuffer?.count ?? 0),
+        pbSendBuffer, DWORD(pbSendBuffer?.count ?? 0),
         &pbRecvBuffer, pcbRecvLength, &lpBytesReturned
     ))
 
@@ -418,7 +426,7 @@ public func SCardEndTransaction(
     _ hCard: SCardHandle,
     _ dwDisposition: SCardDispositionAction
 ) throws (SCardError) {
-    try SCardError.checkResult(CSCardEndTransaction(hCard, dwDisposition.uInt32))
+    try SCardError.checkResult(CSCardEndTransaction(hCard, dwDisposition.dword))
 }
 
 /// Retrieves the current reader attributes for the given handle. It does not affect the state of the reader, driver, or card
@@ -428,10 +436,10 @@ public func SCardEndTransaction(
 ///   - dwAttrID: Identifier for the attribute to get
 public func SCardGetAttrib(
     _ hCard: SCardHandle,
-    _ dwAttrID: UInt32
+    _ dwAttrID: DWORD
 ) throws (SCardError) -> ByteCollection {
     let dwAttrID = dwAttrID
-    var pcbAttrLen: UInt32 = 0
+    var pcbAttrLen: DWORD = 0
 
     try SCardError.checkResult(CSCardGetAttrib(hCard, dwAttrID, nil, &pcbAttrLen))
 
@@ -453,11 +461,11 @@ public func SCardGetAttrib(
 ///   - pbAttr: Attribute value
 public func CSCardSetAttrib(
     _ hCard: SCardHandle,
-    _ dwAttrID: UInt32,
+    _ dwAttrID: DWORD,
     _ pbAttr: ByteCollection
 ) throws (SCardError) {
     let dwAttrID = dwAttrID
     var pbAttr = pbAttr
 
-    try SCardError.checkResult(CSCardSetAttrib(hCard, dwAttrID, &pbAttr, UInt32(pbAttr.count)))
+    try SCardError.checkResult(CSCardSetAttrib(hCard, dwAttrID, &pbAttr, DWORD(pbAttr.count)))
 }

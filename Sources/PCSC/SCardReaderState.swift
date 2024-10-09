@@ -3,6 +3,7 @@
 //
 
 import Essentials
+@_implementationOnly import Clibpcsclite
 
 // MARK: - SCardReaderState
 
@@ -57,7 +58,7 @@ public extension SCardReaderState {
     struct StateValue: OptionSet {
         // MARK: Lifecycle
 
-        public init(rawValue: UInt32) {
+        public init(rawValue: DWORD) {
             self.rawValue = rawValue
         }
 
@@ -105,7 +106,7 @@ public extension SCardReaderState {
         /// This implies that the card in the reader has not been powered up.
         public static let unpowered = Self(rawValue: 0x0400)
 
-        public let rawValue: UInt32
+        public let rawValue: DWORD
     }
 }
 
