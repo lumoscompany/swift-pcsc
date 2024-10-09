@@ -42,32 +42,23 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Essentials", package: "swift-essentials"),
-                .byName(name: "Clibpcsclite", condition: .when(platforms: [.macOS, .linux])),
+                .byName(name: "Clibpcsclite"),
             ],
             path: "Sources/PCSC"
         ),
         .target(
             name: "Clibpcsclite",
             dependencies: [
-                .byNameItem(name: "libpcsclite_macos", condition: .when(platforms: [.macOS])),
-                .byNameItem(name: "libpcsclite_linux", condition: .when(platforms: [.linux])),
+                .byName(name: "libpcsclite"),
             ],
             path: "Sources/Clibpcsclite"
         ),
-        .target(
-            name: "libpcsclite_macos",
-            dependencies: [],
-            path: "Sources/libpcsclite_macos",
-            linkerSettings: [
-                .linkedFramework("PCSC", .when(platforms: [.macOS])),
-            ]
-        ),
-        .target(
-            name: "libpcsclite_linux",
-            dependencies: [],
-            path: "Sources/libpcsclite_linux",
-            linkerSettings: [
-                .linkedLibrary("pcsclite", .when(platforms: [.linux])),
+        .systemLibrary(
+            name: "libpcsclite",
+            pkgConfig: "libpcsclite",
+            providers: [
+                .apt(["libpcsclite-dev"]),
+                .brew(["pcsc-lite"]),
             ]
         ),
     ]

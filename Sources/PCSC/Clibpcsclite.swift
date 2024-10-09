@@ -62,22 +62,6 @@ public func SCardIsValidContext(_ hContext: SCardContext) -> Bool {
     }
 }
 
-/// Defines the timeout value for `SCardTransmit`.
-/// This is useful for instance when card operation takes a long time, during which the reader may appear as “frozen”
-///
-/// - parameters:
-///   - hContext: Card context as returned by `SCardEstablishContext`
-///   - timeout: New value for `SCardTransmit` timeout
-/// - warning: This function has never been supported by 'Winscard', and has been deprecated from 'pcsc-lite'
-@available(*, deprecated)
-public func SCardSetTimeout(
-    _ hContext: SCardContext,
-    _ timeout: TimeInterval
-) throws (SCardError) {
-    let dwTimeout = UInt32(timeout * 1000)
-    try SCardError.checkResult(CSCardSetTimeout(hContext, dwTimeout))
-}
-
 /// - returns: A list of currently available reader groups on the system
 public func CSCardListReaderGroups(
     _ hContext: SCardContext
@@ -405,7 +389,7 @@ public func SCardControl(
 
     var lpBytesReturned = UInt32(0)
 
-    try SCardError.checkResult(CSCardControl132(
+    try SCardError.checkResult(CSCardControl(
         hCard, dwControlCode,
         pbSendBuffer, UInt32(pbSendBuffer?.count ?? 0),
         &pbRecvBuffer, pcbRecvLength, &lpBytesReturned
@@ -435,15 +419,6 @@ public func SCardEndTransaction(
     _ dwDisposition: SCardDispositionAction
 ) throws (SCardError) {
     try SCardError.checkResult(CSCardEndTransaction(hCard, dwDisposition.uInt32))
-}
-
-/// Reserved for future use
-///
-/// - parameters:
-///   - hCard: Card handle as returned by `SCardConnect`
-/// - note: Does nothing ¯\_(ツ)_/¯
-public func SCardCancelTransaction(_ hCard: SCardHandle) throws (SCardError) {
-    try SCardError.checkResult(CSCardCancelTransaction(hCard))
 }
 
 /// Retrieves the current reader attributes for the given handle. It does not affect the state of the reader, driver, or card

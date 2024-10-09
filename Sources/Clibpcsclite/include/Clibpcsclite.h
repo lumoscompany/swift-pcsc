@@ -16,11 +16,22 @@ extern "C"
 #define C_PCSC_API extern __attribute__((visibility ("default")))
 #endif
 
-typedef int32_t SCARDCONTEXT;
+#ifdef __APPLE__
+typedef int32_t LONG;
+typedef uint32_t DWORD;
+#else
+typedef long LONG;
+typedef unsigned long DWORD;
+#endif
+
+typedef DWORD *LPDWORD;
+
+
+typedef LONG SCARDCONTEXT;
 typedef SCARDCONTEXT *PSCARDCONTEXT;
 typedef SCARDCONTEXT *LPSCARDCONTEXT;
 
-typedef int32_t SCARDHANDLE;
+typedef LONG SCARDHANDLE;
 typedef SCARDHANDLE *PSCARDHANDLE;
 typedef SCARDHANDLE *LPSCARDHANDLE;
 
@@ -34,13 +45,11 @@ typedef struct
 {
     const char *szReader;
     void *pvUserData;
-    uint32_t dwCurrentState;
-    uint32_t dwEventState;
-    uint32_t cbAtr;
-    unsigned char *rgbAtr; // [33]
-} CSCARD_READERSTATE_A;
-
-typedef CSCARD_READERSTATE_A CSCARD_READERSTATE, *CPSCARD_READERSTATE_A, *CLPSCARD_READERSTATE_A;
+    DWORD dwCurrentState;
+    DWORD dwEventState;
+    DWORD cbAtr;
+    unsigned char *rgbAtr;
+} CSCARD_READERSTATE, *CLPSCARD_READERSTATE;
 
 typedef struct
 {
@@ -64,88 +73,80 @@ C_PCSC_API const CSCARD_IO_REQUEST cg_rgSCardT0Pci, cg_rgSCardT1Pci, cg_rgSCardR
 #define CSCARD_PROTOCOL_RAW          0x0004
 #define CSCARD_PROTOCOL_T15          0x0008
 
-C_PCSC_API int32_t CSCardEstablishContext(uint32_t dwScope,
-                                          const void *pvReserved1,
-                                          const void *pvReserved2,
-                                          LPSCARDCONTEXT phContext);
+C_PCSC_API LONG CSCardEstablishContext(DWORD dwScope,
+                                       const void *pvReserved1,
+                                       const void *pvReserved2,
+                                       LPSCARDCONTEXT phContext);
 
-C_PCSC_API int32_t CSCardReleaseContext(SCARDCONTEXT hContext);
-C_PCSC_API int32_t CSCardIsValidContext(SCARDCONTEXT hContext);
-C_PCSC_API int32_t CSCardSetTimeout(SCARDCONTEXT hContext, uint32_t dwTimeout);
+C_PCSC_API LONG CSCardReleaseContext(SCARDCONTEXT hContext);
+C_PCSC_API LONG CSCardIsValidContext(SCARDCONTEXT hContext);
 
-C_PCSC_API int32_t CSCardConnect(SCARDCONTEXT hContext,
-                                 const char *szReader,
-                                 uint32_t dwShareMode,
-                                 uint32_t dwPreferredProtocols,
-                                 LPSCARDHANDLE phCard,
-                                 uint32_t *pdwActiveProtocol);
+C_PCSC_API LONG CSCardConnect(SCARDCONTEXT hContext,
+                              const char *szReader,
+                              DWORD dwShareMode,
+                              DWORD dwPreferredProtocols,
+                              LPSCARDHANDLE phCard,
+                              DWORD *pdwActiveProtocol);
 
-C_PCSC_API int32_t CSCardReconnect(SCARDHANDLE hCard,
-                                   uint32_t dwShareMode,
-                                   uint32_t dwPreferredProtocols,
-                                   uint32_t dwInitialization,
-                                   uint32_t *pdwActiveProtocol);
+C_PCSC_API LONG CSCardReconnect(SCARDHANDLE hCard,
+                                DWORD dwShareMode,
+                                DWORD dwPreferredProtocols,
+                                DWORD dwInitialization,
+                                LPDWORD pdwActiveProtocol);
 
-C_PCSC_API int32_t CSCardDisconnect(SCARDHANDLE hCard, uint32_t dwDisposition);
-C_PCSC_API int32_t CSCardBeginTransaction(SCARDHANDLE hCard);
-C_PCSC_API int32_t CSCardEndTransaction(SCARDHANDLE hCard, uint32_t dwDisposition);
-C_PCSC_API int32_t CSCardCancelTransaction(SCARDHANDLE hCard);
+C_PCSC_API LONG CSCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition);
+C_PCSC_API LONG CSCardBeginTransaction(SCARDHANDLE hCard);
+C_PCSC_API LONG CSCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition);
 
-C_PCSC_API int32_t CSCardStatus(SCARDHANDLE hCard,
-                                char *mszReaderNames,
-                                uint32_t *pcchReaderLen,
-                                uint32_t *pdwState,
-                                uint32_t *pdwProtocol,
-                                unsigned char *pbAtr,
-                                uint32_t *pcbAtrLen);
+C_PCSC_API LONG CSCardStatus(SCARDHANDLE hCard,
+                             char *mszReaderNames,
+                             LPDWORD pcchReaderLen,
+                             LPDWORD pdwState,
+                             LPDWORD pdwProtocol,
+                             unsigned char *pbAtr,
+                             LPDWORD pcbAtrLen);
 
-C_PCSC_API int32_t CSCardGetStatusChange(SCARDCONTEXT hContext,
-                                         uint32_t dwTimeout,
-                                         CLPSCARD_READERSTATE_A rgReaderStates,
-                                         uint32_t cReaders);
+C_PCSC_API LONG CSCardGetStatusChange(SCARDCONTEXT hContext,
+                                      DWORD dwTimeout,
+                                      CSCARD_READERSTATE *rgReaderStates,
+                                      DWORD cReaders);
 
-C_PCSC_API int32_t CSCardControl(SCARDHANDLE hCard,
-                                 const void *pbSendBuffer,
-                                 uint32_t cbSendLength,
-                                 void *pbRecvBuffer,
-                                 uint32_t *pcbRecvLength);
+C_PCSC_API LONG CSCardControl(SCARDHANDLE hCard,
+                              DWORD dwControlCode,
+                              const void *pbSendBuffer,
+                              DWORD cbSendLength,
+                              void *pbRecvBuffer,
+                              DWORD cbRecvLength,
+                              DWORD *lpBytesReturned);
 
-C_PCSC_API int32_t CSCardControl132(SCARDHANDLE hCard,
-                                    uint32_t dwControlCode,
-                                    const void *pbSendBuffer,
-                                    uint32_t cbSendLength,
-                                    void *pbRecvBuffer,
-                                    uint32_t cbRecvLength,
-                                    uint32_t *lpBytesReturned);
+C_PCSC_API LONG CSCardTransmit(SCARDHANDLE hCard,
+                               const CSCARD_IO_REQUEST *pioSendPci,
+                               const unsigned char *pbSendBuffer,
+                               DWORD cbSendLength,
+                               CLPSCARD_IO_REQUEST pioRecvPci,
+                               unsigned char *pbRecvBuffer,
+                               DWORD *pcbRecvLength);
 
-C_PCSC_API int32_t CSCardTransmit(SCARDHANDLE hCard,
-                                  CLPCSCARD_IO_REQUEST pioSendPci,
-                                  const unsigned char *pbSendBuffer,
-                                  uint32_t cbSendLength,
-                                  CLPSCARD_IO_REQUEST pioRecvPci,
-                                  unsigned char *pbRecvBuffer,
-                                  uint32_t *pcbRecvLength);
+C_PCSC_API LONG CSCardListReaderGroups(SCARDCONTEXT hContext,
+                                       char *mszGroups,
+                                       LPDWORD pcchGroups);
 
-C_PCSC_API int32_t CSCardListReaderGroups(SCARDCONTEXT hContext,
-                                          char *mszGroups,
-                                          uint32_t *pcchGroups);
+C_PCSC_API LONG CSCardListReaders(SCARDCONTEXT hContext,
+                                  const char *mszGroups,
+                                  char *mszReaders,
+                                  LPDWORD pcchReaders);
 
-C_PCSC_API int32_t CSCardListReaders(SCARDCONTEXT hContext,
-                                     const char *mszGroups,
-                                     char *mszReaders,
-                                     uint32_t *pcchReaders);
+C_PCSC_API LONG CSCardCancel(SCARDCONTEXT hContext);
 
-C_PCSC_API int32_t CSCardCancel(SCARDCONTEXT hContext);
+C_PCSC_API LONG CSCardGetAttrib(SCARDHANDLE hCard,
+                                DWORD dwAttrId,
+                                uint8_t *pbAttr,
+                                DWORD *pcbAttrLen);
 
-C_PCSC_API int32_t CSCardGetAttrib(SCARDHANDLE hCard,
-                                   uint32_t dwAttrId,
-                                   uint8_t *pbAttr,
-                                   uint32_t *pcbAttrLen);
-
-C_PCSC_API int32_t CSCardSetAttrib(SCARDHANDLE hCard,
-                                   uint32_t dwAttrId,
-                                   const uint8_t *pbAttr,
-                                   uint32_t cbAttrLen);
+C_PCSC_API LONG CSCardSetAttrib(SCARDHANDLE hCard,
+                                DWORD dwAttrId,
+                                const uint8_t *pbAttr,
+                                DWORD cbAttrLen);
 
 
 #if defined(__cplusplus)

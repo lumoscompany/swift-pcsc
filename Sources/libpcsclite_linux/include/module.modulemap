@@ -1,5 +1,0 @@
-module libpcsclite_linux [system] {
-    header "libpcsclite_linux.h"
-    link "pcsclite"
-    export *
-}

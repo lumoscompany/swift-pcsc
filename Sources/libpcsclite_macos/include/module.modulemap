@@ -1,5 +1,0 @@
-module libpcsclite_macos [system] {
-    header "libpcsclite_macos.h"
-    link "PCSC"
-    export *
-}
