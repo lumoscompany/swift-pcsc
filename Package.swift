@@ -49,7 +49,7 @@ let package = Package(
         .target(
             name: "Clibpcsclite",
             dependencies: [
-                .byName(name: "libpcsclite"),
+                .byNameItem(name: "libpcsclite", condition: .when(platforms: [.linux])),
             ],
             path: "Sources/Clibpcsclite"
         ),
@@ -58,7 +58,6 @@ let package = Package(
             pkgConfig: "libpcsclite",
             providers: [
                 .apt(["libpcsclite-dev"]),
-                .brew(["pcsc-lite"]),
             ]
         ),
     ]

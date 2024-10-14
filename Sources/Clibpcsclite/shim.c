@@ -4,8 +4,13 @@
 
 #include <Clibpcsclite.h>
 
+#if __has_include(<PCSC/winscard.h>) && __has_include(<PCSC/wintypes.h>)
+#include <PCSC/winscard.h>
+#include <PCSC/wintypes.h>
+#else
 #include <winscard.h>
 #include <wintypes.h>
+#endif
 
 const CSCARD_IO_REQUEST cg_rgSCardT0Pci = { CSCARD_PROTOCOL_T0, sizeof(CSCARD_IO_REQUEST) };
 const CSCARD_IO_REQUEST cg_rgSCardT1Pci = { CSCARD_PROTOCOL_T1, sizeof(CSCARD_IO_REQUEST) };
