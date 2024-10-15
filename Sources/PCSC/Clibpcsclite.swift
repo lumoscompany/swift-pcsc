@@ -314,16 +314,20 @@ public func SCardStatus(
     ))
 
     let _szReaderName = [String](szReaderName, capacity: Int(pcchReaderLen)).first
-    let _pdwState = SCardState(value: pdwState)
     let _pdwProtocol = SCardProtocol(value: pdwProtocol)
     let _pbAtr = ByteCollection(Data(bytes: pbAtr, count: Int(pcbAtrLen)))
 
-    guard let _szReaderName, let _pdwState, let _pdwProtocol
+    guard let _szReaderName, let _pdwProtocol
     else {
         throw .init(.internalError)
     }
 
-    return (SCardReaderName(rawValue: _szReaderName), _pdwState, _pdwProtocol, _pbAtr)
+    return (
+        SCardReaderName(rawValue: _szReaderName),
+        SCardState(rawValue: pdwState),
+        _pdwProtocol,
+        _pbAtr
+    )
 }
 
 /// Sends a command APDU to the smartcard, and retrieve its response
