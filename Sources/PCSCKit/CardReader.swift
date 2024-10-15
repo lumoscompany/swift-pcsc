@@ -3,6 +3,7 @@
 //
 
 import Essentials
+import Logging
 import PCSC
 
 // MARK: - CardReader
@@ -14,9 +15,9 @@ public final class CardReader {
         self.name = name
         self.driver = drivers.filter({
             let anyDriver = AnyPeripheralDeviceDriver($0)
-            return anyDriver.deviceSearchNames
-                .map({ $0.lowercased() })
-                .contains(name.rawValue.lowercased())
+            return !anyDriver.deviceSearchNames
+                .filter({ name.rawValue.lowercased().contains($0.lowercased()) })
+                .isEmpty
         }).first ?? _PeripheralDeviceDriver.self
 
         self.session = session
@@ -30,6 +31,10 @@ public final class CardReader {
     // MARK: Internal
 
     let session: ReaderSession
+
+    // MARK: Private
+
+    private let logger = Logger(label: "CardReader")
 }
 
 // MARK: Equatable
@@ -61,9 +66,10 @@ public extension CardReader {
     ) async throws (ReaderError) -> P? where P: PICC {
         let hContext = session.hContext
 
-        let dwTimeout = TimeInterval(0.5)
+        let dwTimeout = TimeInterval(0.2)
         var dwTimeouts = Int(timeout / dwTimeout)
 
+        logger.debug("Polling a PICC for with timeout: \(timeout)")
         while dwTimeouts > 0 {
             do throws (SCardError) {
                 guard !Task.isCancelled
@@ -75,10 +81,11 @@ public extension CardReader {
 
                 var states = [SCardReaderState(szReader: name)]
                 try await _SCardGetStatusChange(hContext, dwTimeout, &states)
-                try? await Task.sleep(nanoseconds: UInt64(dwTimeout * 1_000_000_000))
 
                 guard let state = states.first, state.dwEventState.contains(.present)
                 else {
+                    logger.trace("PICC not found, waiting")
+                    try? await Task.sleep(nanoseconds: UInt64(dwTimeout * 1_000_000_000))
                     continue
                 }
 
@@ -92,16 +99,22 @@ public extension CardReader {
 
                 guard let picc = P(rawValue: unit)
                 else {
+                    let _type = String(describing: P.self)
+                    logger.debug("PICC found, but couldn't instantiate for \(_type)")
+                    try? await Task.sleep(nanoseconds: UInt64(dwTimeout * 1_000_000_000))
                     continue
                 }
 
                 unit.driver.didConnect(to: picc)
+                logger.debug("PICC found; ATR: [\(unit.ATR.hexadecimalString(separator: ""))]")
                 return picc
             } catch {
+                logger.error("\(error)")
                 throw .hardware(error)
             }
         }
 
+        logger.debug("PICC not found")
         return nil
     }
 }
@@ -112,9 +125,10 @@ public extension CardReader {
     ) async throws (ReaderError) {
         let hContext = session.hContext
 
-        let dwTimeout = TimeInterval(0.5)
+        let dwTimeout = TimeInterval(0.2)
         var dwTimeouts = Int(timeout / dwTimeout)
 
+        logger.debug("Waiting for a disconnecting a PICC with timeout: \(timeout)")
         while dwTimeouts > 0 {
             do throws (SCardError) {
                 guard !Task.isCancelled
@@ -129,11 +143,15 @@ public extension CardReader {
 
                 guard let state = states.first, state.dwEventState.contains(.empty)
                 else {
+                    logger.trace("PICC still connected, waiting")
+                    try? await Task.sleep(nanoseconds: UInt64(dwTimeout * 1_000_000_000))
                     continue
                 }
 
+                logger.debug("PICC successfully disconnected!")
                 break
             } catch {
+                logger.error("\(error)")
                 throw .hardware(error)
             }
         }

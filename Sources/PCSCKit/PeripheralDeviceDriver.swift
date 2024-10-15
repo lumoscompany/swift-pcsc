@@ -3,6 +3,7 @@
 //
 
 import Essentials
+import EssentialsNFC
 import PCSC
 
 // MARK: - PeripheralDeviceDriver
@@ -13,6 +14,7 @@ public protocol PeripheralDeviceDriver: Sendable {
     init()
 
     func wrap(directTransceive byteCollection: ByteCollection) throws -> ByteCollection
+    func unwrap(directTransceive byteCollection: ByteCollection) throws -> ByteCollection
 
     func didConnect(to picc: any PICC)
     func didDisconnect()
@@ -21,6 +23,12 @@ public protocol PeripheralDeviceDriver: Sendable {
 public extension PeripheralDeviceDriver {
     func wrap(directTransceive byteCollection: ByteCollection) throws -> ByteCollection {
         byteCollection
+    }
+
+    func unwrap(directTransceive byteCollection: ByteCollection) throws -> ByteCollection {
+        let apdu = try ISO7816.APDU.Response(byteCollection)
+        try apdu.checkError()
+        return apdu.data
     }
 
     func didConnect(to picc: any PICC) {}

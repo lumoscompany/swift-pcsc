@@ -3,6 +3,7 @@
 //
 
 import Essentials
+import Logging
 import PCSC
 
 // MARK: - CardReader.Unit
@@ -44,6 +45,10 @@ public extension CardReader {
 
         let hCard: SCardHandle
         let pwProtocol: SCardProtocol
+
+        // MARK: Private
+
+        private let logger = Logger(label: "CardReader.Unit")
     }
 }
 
@@ -85,10 +90,19 @@ public extension CardReader.Unit {
         case .direct: try wrap(directTransceive: byteCollection)
         }
 
+        logger.trace("Transmitting: [\(pbSendBuffer.hexadecimalString(separator: ""))]")
+
+        var result: ByteCollection? = nil
         do {
-            return try SCardTransmit(hCard, pioSendPci, pbSendBuffer).pbRecvBuffer
+            result = try SCardTransmit(hCard, pioSendPci, pbSendBuffer).pbRecvBuffer
         } catch {
             throw .hardware(error)
+        }
+
+        logger.trace("Received: [\(result?.hexadecimalString(separator: "") ?? "")]")
+        return switch type {
+        case .raw: result
+        case .direct: try unwrap(directTransceive: result ?? [])
         }
     }
 
@@ -97,6 +111,16 @@ public extension CardReader.Unit {
     ) throws (ReaderError) -> ByteCollection {
         do {
             return try driver.wrap(directTransceive: byteCollection)
+        } catch {
+            throw .driver(error)
+        }
+    }
+
+    private func unwrap(
+        directTransceive byteCollection: ByteCollection
+    ) throws (ReaderError) -> ByteCollection {
+        do {
+            return try driver.unwrap(directTransceive: byteCollection)
         } catch {
             throw .driver(error)
         }
