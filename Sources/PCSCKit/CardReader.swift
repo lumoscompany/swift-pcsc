@@ -75,6 +75,7 @@ public extension CardReader {
 
                 var states = [SCardReaderState(szReader: name)]
                 try await _SCardGetStatusChange(hContext, dwTimeout, &states)
+                try? await Task.sleep(nanoseconds: UInt64(dwTimeout * 1_000_000_000))
 
                 guard let state = states.first, state.dwEventState.contains(.present)
                 else {
