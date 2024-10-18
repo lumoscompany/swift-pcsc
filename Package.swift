@@ -14,16 +14,16 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/apple/swift-log",
+            url: "https://github.com/apple/swift-log.git",
             .upToNextMajor(from: "1.6.1")
         ),
         .package(
             url: "https://github.com/lumoscompany/swift-essentials.git",
-            .upToNextMajor(from: "0.0.18")
+            .upToNextMajor(from: "0.0.22")
         ),
         .package(
             url: "https://github.com/lumoscompany/swift-essentials-nfc.git",
-            .upToNextMajor(from: "0.0.4")
+            .upToNextMajor(from: "0.0.5")
         ),
     ],
     targets: [
