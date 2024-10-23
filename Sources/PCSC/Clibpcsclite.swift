@@ -361,8 +361,8 @@ public func SCardTransmit(
 
     let pbSendBuffer = pbSendBuffer
 
-    var pbRecvBuffer = ByteCollection(repeating: 0, count: Int(MAX_BUFFER_SIZE_EXTENDED))
-    var pcbRecvLength = DWORD(MAX_BUFFER_SIZE_EXTENDED)
+    var pbRecvBuffer = ByteCollection(repeating: 0, count: Int(MAX_BUFFER_SIZE))
+    var pcbRecvLength = DWORD(MAX_BUFFER_SIZE)
 
     try SCardError.checkResult(CSCardTransmit(
         hCard,
