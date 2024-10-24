@@ -16,6 +16,8 @@ extern "C"
 #define C_PCSC_API extern __attribute__((visibility ("default")))
 #endif
 
+#define MAX_ATR_SIZE 33
+
 #ifdef __APPLE__
 typedef int32_t LONG;
 typedef uint32_t DWORD;
@@ -48,7 +50,7 @@ typedef struct
     DWORD dwCurrentState;
     DWORD dwEventState;
     DWORD cbAtr;
-    unsigned char *rgbAtr;
+    unsigned char rgbAtr[MAX_ATR_SIZE];
 } CSCARD_READERSTATE, *CLPSCARD_READERSTATE;
 
 typedef struct

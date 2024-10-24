@@ -130,9 +130,6 @@ public func SCardGetStatusChange(
     var szReaderNames: [UnsafeMutablePointer<CChar>] = []
     defer { szReaderNames.forEach({ $0.deallocate() }) }
 
-    var rgbAtrs: [UnsafeMutablePointer<UInt8>] = []
-    defer { rgbAtrs.forEach({ $0.deallocate() }) }
-
     var _rgReaderStates: [CSCARD_READERSTATE] = rgReaderStates.map({
         var rgReaderState = CSCARD_READERSTATE()
         rgReaderState.dwCurrentState = $0.dwCurrentState.rawValue
@@ -148,12 +145,11 @@ public func SCardGetStatusChange(
         }
 
         if let rgbAtr = $0.rgbAtr {
-            let _rgbAtr = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(MAX_ATR_SIZE))
-            _rgbAtr.initialize(from: rgbAtr, count: rgbAtr.count)
-            rgbAtrs.append(_rgbAtr)
-
-            rgReaderState.rgbAtr = _rgbAtr
-            rgReaderState.cbAtr = DWORD(MAX_ATR_SIZE)
+            let rgbAtrCount = min(rgbAtr.count, Int(MAX_ATR_SIZE))
+            withUnsafeMutableBytes(of: &rgReaderState.rgbAtr, { buffer in
+                buffer.copyBytes(from: rgbAtr.prefix(rgbAtrCount))
+            })
+            rgReaderState.cbAtr = DWORD(rgbAtrCount)
         }
 
         return rgReaderState
@@ -180,9 +176,9 @@ public func SCardGetStatusChange(
                     return nil
                 }
 
-                return withUnsafeBytes(of: state.rgbAtr, { pointer in
-                    let buffer = pointer.bindMemory(to: UInt8.self)
-                    return ByteCollection(Data(buffer: buffer))
+                return withUnsafeBytes(of: state.rgbAtr, { stateRgbAtr in
+                    let atrData = Data(stateRgbAtr.prefix(Int(state.cbAtr)))
+                    return ByteCollection(atrData)
                 })
             }()
         )
