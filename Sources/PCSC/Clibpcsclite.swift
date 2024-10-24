@@ -9,8 +9,8 @@ import Essentials
 public typealias LONG = Int32
 public typealias DWORD = UInt32
 #else
-public typealias LONG = Int
-public typealias DWORD = UInt
+public typealias LONG = CLong
+public typealias DWORD = CUnsignedLong
 #endif
 
 /// Maximum amount of bytes in an ATR
