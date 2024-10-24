@@ -344,25 +344,21 @@ public func SCardStatus(
 ///            APDU response `pbRecvBuffer`;
 public func SCardTransmit(
     _ hCard: SCardHandle,
-    _ pioSendPci: SCardPCI?,
+    _ pioSendPci: SCardPCI,
     _ pbSendBuffer: ByteCollection,
     _ pioRecvPci: SCardPCI? = nil
 ) throws (SCardError) -> (pioRecvPci: SCardPCI?, pbRecvBuffer: ByteCollection?) {
-    var _pioSendPci: UnsafeMutablePointer<CSCARD_IO_REQUEST>?
-    defer { _pioSendPci?.deallocate() }
-    if let pioSendPci = try pioSendPci?.IO_REQUEST {
-        _pioSendPci = .allocate(capacity: 1)
-        _pioSendPci?.initialize(to: pioSendPci)
-    }
+    let _pioSendPci: UnsafeMutablePointer<CSCARD_IO_REQUEST> = .allocate(capacity: 1)
+    defer { _pioSendPci.deallocate() }
+    try _pioSendPci.initialize(to: pioSendPci.IO_REQUEST)
 
     var _pioRecvPci: UnsafeMutablePointer<CSCARD_IO_REQUEST>?
     defer { _pioRecvPci?.deallocate() }
+
     if let pioRecvPci = try pioRecvPci?.IO_REQUEST {
         _pioRecvPci = .allocate(capacity: 1)
         _pioRecvPci?.initialize(to: pioRecvPci)
     }
-
-    let pbSendBuffer = pbSendBuffer
 
     var pbRecvBuffer = ByteCollection(repeating: 0, count: Int(MAX_BUFFER_SIZE))
     var pcbRecvLength = DWORD(MAX_BUFFER_SIZE)
