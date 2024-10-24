@@ -175,11 +175,9 @@ public func SCardGetStatusChange(
                     return nil
                 }
 
-                return withUnsafePointer(to: state.rgbAtr, {
-                    let pointer = UnsafeRawBufferPointer(start: $0, count: Int(state.cbAtr))
-                    var data = Data(count: Int(state.cbAtr))
-                    let _ = data.withUnsafeMutableBytes({ pointer.copyBytes(to: $0) })
-                    return ByteCollection(data)
+                return withUnsafeBytes(of: state.rgbAtr, { pointer in
+                    let buffer = pointer.bindMemory(to: UInt8.self)
+                    return ByteCollection(Data(buffer: buffer))
                 })
             }()
         )
