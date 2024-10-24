@@ -127,7 +127,9 @@ public func SCardGetStatusChange(
     _ dwTimeout: TimeInterval,
     _ rgReaderStates: inout [SCardReaderState]
 ) throws (SCardError) {
-    var szReaderNames: [[CChar]?] = []
+    var szReaderNames: [UnsafeMutablePointer<CChar>] = []
+    defer { szReaderNames.forEach({ $0.deallocate() }) }
+
     var rgbAtrs: [UnsafeMutablePointer<UInt8>] = []
     defer { rgbAtrs.forEach({ $0.deallocate() }) }
 
@@ -137,13 +139,17 @@ public func SCardGetStatusChange(
         rgReaderState.dwEventState = $0.dwEventState.rawValue
         rgReaderState.cbAtr = DWORD(MAX_ATR_SIZE)
 
-        let szReader = $0.szReader.rawValue.cString(using: .utf8)
-        szReaderNames.append(szReader)
-        rgReaderState.szReader = szReader?.withUnsafeBufferPointer({ $0.baseAddress })
+        if let cszReader = $0.szReader.rawValue.cString(using: .utf8) {
+            let _szReader = UnsafeMutablePointer<CChar>.allocate(capacity: cszReader.count)
+            _szReader.initialize(from: cszReader, count: cszReader.count)
+            szReaderNames.append(_szReader)
 
-        if var rgbAtr = $0.rgbAtr {
+            rgReaderState.szReader = UnsafePointer(_szReader)
+        }
+
+        if let rgbAtr = $0.rgbAtr {
             let _rgbAtr = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(MAX_ATR_SIZE))
-            _rgbAtr.initialize(from: &rgbAtr, count: rgbAtr.count)
+            _rgbAtr.initialize(from: rgbAtr, count: rgbAtr.count)
             rgbAtrs.append(_rgbAtr)
 
             rgReaderState.rgbAtr = _rgbAtr
@@ -163,7 +169,6 @@ public func SCardGetStatusChange(
         cReaders
     ))
 
-    let _ = szReaderNames
     rgReaderStates = _rgReaderStates.map({ state in
         SCardReaderState(
             szReader: .init(rawValue: .init(cString: state.szReader)),
@@ -207,14 +212,15 @@ public func SCardConnect(
     _ dwShareMode: SCardShareMode = .shared,
     _ dwPreferredProtocols: Set<SCardProtocol> = [.t0, .t1]
 ) throws (SCardError) -> (phCard: SCardHandle, pdwActiveProtocol: SCardProtocol) {
-    let szReader = szReader.rawValue.cString(using: .utf8)
+    let szReader = szReader.unsafeMutablePointer
+    defer { szReader.deallocate() }
 
     var phCard: LONG = 0
     var pdwActiveProtocol: DWORD = 0
 
     try SCardError.checkResult(CSCardConnect(
         hContext,
-        szReader?.withUnsafeBufferPointer({ $0.baseAddress }),
+        szReader,
         dwShareMode.dword,
         dwPreferredProtocols.dword,
         &phCard,
@@ -226,7 +232,6 @@ public func SCardConnect(
         throw .init(.internalError)
     }
 
-    let _ = szReader
     return (phCard, pdwActiveProtocol)
 }
 

@@ -37,3 +37,16 @@ extension RangeReplaceableCollection where Element == SCardReaderName {
         self.init([String](pointer, capacity: capacity).map({ .init(rawValue: $0) }))
     }
 }
+
+extension SCardReaderName {
+    var unsafeMutablePointer: UnsafeMutablePointer<CChar> {
+        guard let cString = rawValue.cString(using: .utf8)
+        else {
+            return .allocate(capacity: 0)
+        }
+
+        let pointer = UnsafeMutablePointer<CChar>.allocate(capacity: cString.count)
+        pointer.initialize(from: cString, count: cString.count)
+        return pointer
+    }
+}
