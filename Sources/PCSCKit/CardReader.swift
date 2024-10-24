@@ -89,7 +89,7 @@ public extension CardReader {
                     continue
                 }
 
-                let connection = try SCardConnect(hContext, name, .shared, [.t0, .t1])
+                let connection = try await _SCardConnect(hContext, name, .shared, [.t0, .t1])
                 let unit = try await Unit(
                     reader: self,
                     driver: driver.init(),
@@ -166,5 +166,15 @@ private extension CardReader {
         _ rgReaderStates: inout [SCardReaderState]
     ) throws (SCardError) {
         try SCardGetStatusChange(hContext, dwTimeout, &rgReaderStates)
+    }
+
+    @SynchronousActor
+    func _SCardConnect(
+        _ hContext: SCardContext,
+        _ szReader: SCardReaderName,
+        _ dwShareMode: SCardShareMode = .shared,
+        _ dwPreferredProtocols: Set<SCardProtocol> = [.t0, .t1]
+    ) throws (SCardError) -> (phCard: SCardHandle, pdwActiveProtocol: SCardProtocol) {
+        try SCardConnect(hContext, szReader, dwShareMode, dwPreferredProtocols)
     }
 }

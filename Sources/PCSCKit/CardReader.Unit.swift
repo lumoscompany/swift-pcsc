@@ -31,7 +31,10 @@ public extension CardReader {
         }
 
         deinit {
-            try? SCardDisconnect(hCard, .leave)
+            let hCard = self.hCard
+            SynchronousActor.runDetached({
+                try? SCardDisconnect(hCard, .leave)
+            })
         }
 
         // MARK: Public

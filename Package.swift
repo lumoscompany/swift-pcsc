@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "swift-pcsc",
     platforms: [
-        .macOS("13.3"),
+        .macOS("14.0"),
     ],
     products: [
         .library(name: "PCSCKit", targets: ["PCSCKit"]),
