@@ -7,17 +7,17 @@ import Essentials
 // MARK: - SynchronousActor
 
 @globalActor
-public actor SynchronousActor {
-    public static let shared = SynchronousActor()
-    public static let sharedUnownedExecutor = Executor.shared.asUnownedSerialExecutor()
+actor SynchronousActor {
+    static let shared = SynchronousActor()
+    static let sharedUnownedExecutor = Executor.shared.asUnownedSerialExecutor()
 
-    public static func run<T, E>(
+    static func run<T, E>(
         _ operation: @SynchronousActor @Sendable () throws (E) -> T
     ) async rethrows -> T where T: Sendable {
         try await operation()
     }
 
-    public static func runDetached<T, E>(
+    static func detached<T, E>(
         _ operation: @SynchronousActor @Sendable @escaping () throws (E) -> T
     ) where T: Sendable {
         Task.detached(operation: operation)

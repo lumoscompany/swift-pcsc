@@ -13,6 +13,8 @@ public final class CardReader {
 
     init(session: ReaderSession, name: SCardReaderName, drivers: [PeripheralDeviceDriver.Type]) {
         self.name = name
+        self.session = session
+
         self.driver = drivers.filter({
             let anyDriver = AnyPeripheralDeviceDriver($0)
             return !anyDriver.deviceSearchNames
@@ -20,7 +22,13 @@ public final class CardReader {
                 .isEmpty
         }).first ?? _PeripheralDeviceDriver.self
 
-        self.session = session
+        logger.trace("Successfully initialized with driver \(String(describing: driver))")
+        logger.trace("==> Driver: \(String(describing: driver))")
+        logger.trace("==> Device: \(name.rawValue)")
+    }
+
+    deinit {
+        logger.trace("Deinitialized")
     }
 
     // MARK: Public
@@ -158,23 +166,21 @@ public extension CardReader {
     }
 }
 
-private extension CardReader {
-    @SynchronousActor
-    func _SCardGetStatusChange(
-        _ hContext: SCardContext,
-        _ dwTimeout: TimeInterval,
-        _ rgReaderStates: inout [SCardReaderState]
-    ) throws (SCardError) {
-        try SCardGetStatusChange(hContext, dwTimeout, &rgReaderStates)
-    }
+@SynchronousActor
+private func _SCardGetStatusChange(
+    _ hContext: SCardContext,
+    _ dwTimeout: TimeInterval,
+    _ rgReaderStates: inout [SCardReaderState]
+) throws (SCardError) {
+    try SCardGetStatusChange(hContext, dwTimeout, &rgReaderStates)
+}
 
-    @SynchronousActor
-    func _SCardConnect(
-        _ hContext: SCardContext,
-        _ szReader: SCardReaderName,
-        _ dwShareMode: SCardShareMode = .shared,
-        _ dwPreferredProtocols: Set<SCardProtocol> = [.t0, .t1]
-    ) throws (SCardError) -> (phCard: SCardHandle, pdwActiveProtocol: SCardProtocol) {
-        try SCardConnect(hContext, szReader, dwShareMode, dwPreferredProtocols)
-    }
+@SynchronousActor
+private func _SCardConnect(
+    _ hContext: SCardContext,
+    _ szReader: SCardReaderName,
+    _ dwShareMode: SCardShareMode = .shared,
+    _ dwPreferredProtocols: Set<SCardProtocol> = [.t0, .t1]
+) throws (SCardError) -> (phCard: SCardHandle, pdwActiveProtocol: SCardProtocol) {
+    try SCardConnect(hContext, szReader, dwShareMode, dwPreferredProtocols)
 }

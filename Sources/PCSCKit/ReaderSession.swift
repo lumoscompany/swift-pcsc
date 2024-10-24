@@ -11,11 +11,11 @@ import Logging
 public final class ReaderSession {
     // MARK: Lifecycle
 
-    public init() throws (ReaderError) {
+    public init() async throws (ReaderError) {
         let logger = Logger(label: "ReaderSession")
         do {
-            self.hContext = try SCardEstablishContext(.system)
-            logger.info("Context successfully established")
+            self.hContext = try await _SCardEstablishContext(.system)
+            logger.trace("Context successfully established")
         } catch {
             logger.error("Context establishing error: \(error.localizedDescription)")
             throw .hardware(error)
@@ -24,7 +24,13 @@ public final class ReaderSession {
     }
 
     deinit {
-        try? SCardReleaseContext(hContext)
+        let hContext = self.hContext
+        let logger = self.logger
+
+        SynchronousActor.detached({
+            try? SCardReleaseContext(hContext)
+            logger.trace("Context successfully released")
+        })
     }
 
     // MARK: Public
@@ -32,8 +38,8 @@ public final class ReaderSession {
     public func readers(
         for groups: [SCardReaderGroup] = [],
         compatibleWith drivers: [PeripheralDeviceDriver.Type] = []
-    ) throws -> [CardReader] {
-        let readers = try SCardListReaders(hContext, groups).map({
+    ) async throws -> [CardReader] {
+        let readers = try await _SCardListReaders(hContext, groups).map({
             CardReader(session: self, name: $0, drivers: drivers)
         })
 
@@ -59,3 +65,20 @@ public final class ReaderSession {
 // MARK: Sendable
 
 extension ReaderSession: Sendable {}
+
+@SynchronousActor
+private func _SCardEstablishContext(
+    _ dwScope: SCardScope = .system,
+    _ pvReserved1: UnsafeRawPointer? = nil,
+    _ pvReserved2: UnsafeRawPointer? = nil
+) throws (SCardError) -> SCardContext {
+    try SCardEstablishContext(dwScope, pvReserved1, pvReserved2)
+}
+
+@SynchronousActor
+public func _SCardListReaders(
+    _ hContext: SCardContext,
+    _ mszGroups: [SCardReaderGroup] = []
+) throws (SCardError) -> [SCardReaderName] {
+    try SCardListReaders(hContext, mszGroups)
+}

@@ -12,14 +12,13 @@ public extension CardReader {
     final class Unit {
         // MARK: Lifecycle
 
-        @SynchronousActor
         init(
             reader: CardReader,
             driver: PeripheralDeviceDriver,
             hCard: SCardHandle,
             pwProtocol: SCardProtocol
-        ) throws (SCardError) {
-            let state = try SCardStatus(hCard)
+        ) async throws (SCardError) {
+            let state = try await _SCardStatus(hCard)
 
             self.ATR = state.pbAtr
 
@@ -32,7 +31,7 @@ public extension CardReader {
 
         deinit {
             let hCard = self.hCard
-            SynchronousActor.runDetached({
+            SynchronousActor.detached({
                 try? SCardDisconnect(hCard, .leave)
             })
         }
@@ -76,11 +75,10 @@ extension CardReader.Unit: Hashable {
 extension CardReader.Unit: Sendable {}
 
 public extension CardReader.Unit {
-    @SynchronousActor
     func transmit(
         _ byteCollection: ByteCollection,
         with type: TransceiveType
-    ) throws (ReaderError) -> ByteCollection? {
+    ) async throws (ReaderError) -> ByteCollection? {
         let pioSendPci: SCardPCI
         do {
             pioSendPci = try SCardPCI(pdwProtocol: pwProtocol)
@@ -97,7 +95,7 @@ public extension CardReader.Unit {
 
         var result: ByteCollection? = nil
         do {
-            result = try SCardTransmit(hCard, pioSendPci, pbSendBuffer).pbRecvBuffer
+            result = try await _SCardTransmit(hCard, pioSendPci, pbSendBuffer).pbRecvBuffer
         } catch {
             throw .hardware(error)
         }
@@ -128,4 +126,26 @@ public extension CardReader.Unit {
             throw .driver(error)
         }
     }
+}
+
+@SynchronousActor
+private func _SCardTransmit(
+    _ hCard: SCardHandle,
+    _ pioSendPci: SCardPCI,
+    _ pbSendBuffer: ByteCollection,
+    _ pioRecvPci: SCardPCI? = nil
+) throws (SCardError) -> (pioRecvPci: SCardPCI?, pbRecvBuffer: ByteCollection?) {
+    try SCardTransmit(hCard, pioSendPci, pbSendBuffer)
+}
+
+@SynchronousActor
+private func _SCardStatus(
+    _ hCard: SCardHandle
+) throws (SCardError) -> (
+    szReaderName: SCardReaderName,
+    pdwState: SCardState,
+    pdwProtocol: SCardProtocol,
+    pbAtr: ByteCollection
+) {
+    try SCardStatus(hCard)
 }
