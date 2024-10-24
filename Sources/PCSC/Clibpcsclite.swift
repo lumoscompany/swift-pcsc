@@ -348,34 +348,26 @@ public func SCardTransmit(
     _ pbSendBuffer: ByteCollection,
     _ pioRecvPci: SCardPCI? = nil
 ) throws (SCardError) -> (pioRecvPci: SCardPCI?, pbRecvBuffer: ByteCollection?) {
-    let _pioSendPci: UnsafeMutablePointer<CSCARD_IO_REQUEST> = .allocate(capacity: 1)
-    defer { _pioSendPci.deallocate() }
-    try _pioSendPci.initialize(to: pioSendPci.IO_REQUEST)
-
-    var _pioRecvPci: UnsafeMutablePointer<CSCARD_IO_REQUEST>?
-    defer { _pioRecvPci?.deallocate() }
-
-    if let pioRecvPci = try pioRecvPci?.IO_REQUEST {
-        _pioRecvPci = .allocate(capacity: 1)
-        _pioRecvPci?.initialize(to: pioRecvPci)
-    }
-
     var pbRecvBuffer = ByteCollection(repeating: 0, count: Int(MAX_BUFFER_SIZE))
     var pcbRecvLength = DWORD(MAX_BUFFER_SIZE)
 
-    try SCardError.checkResult(CSCardTransmit(
-        hCard,
-        _pioSendPci, pbSendBuffer, DWORD(pbSendBuffer.count),
-        _pioRecvPci, &pbRecvBuffer, &pcbRecvLength
-    ))
+    var _pioSendPci = try pioSendPci.IO_REQUEST
+    var _pioRecvPci = CSCARD_IO_REQUEST()
 
-    var pioRecvPci: SCardPCI?
-    if let pointee = _pioRecvPci?.pointee {
-        pioRecvPci = try .init(IO_REQUEST: pointee)
+    if let pioRecvPci {
+        let __pioRecvPci = try pioRecvPci.IO_REQUEST
+        _pioRecvPci.dwProtocol = __pioRecvPci.dwProtocol
+        _pioRecvPci.cbPciLength = __pioRecvPci.cbPciLength
     }
 
-    return (
-        pioRecvPci,
+    try SCardError.checkResult(CSCardTransmit(
+        hCard,
+        &_pioSendPci, pbSendBuffer, DWORD(pbSendBuffer.count),
+        &_pioRecvPci, &pbRecvBuffer, &pcbRecvLength
+    ))
+
+    return try (
+        SCardPCI(IO_REQUEST: _pioRecvPci),
         pcbRecvLength > 0 ? ByteCollection(pbRecvBuffer[0 ..< Int(pcbRecvLength)]) : nil
     )
 }
