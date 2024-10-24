@@ -86,7 +86,7 @@ LONG CSCardGetStatusChange(SCARDCONTEXT hContext,
                            CSCARD_READERSTATE *rgReaderStates,
                            DWORD cReaders)
 {
-    return SCardGetStatusChange(hContext, dwTimeout, (LPSCARD_READERSTATE_A)rgReaderStates, cReaders);
+    return SCardGetStatusChange(hContext, dwTimeout, (SCARD_READERSTATE_A *)rgReaderStates, cReaders);
 }
 
 LONG CSCardControl(SCARDHANDLE hCard,
